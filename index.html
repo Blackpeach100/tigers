@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐯 タイガース チケットシェア</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --yellow: #FFD000;
+    --black: #111111;
+    --card-bg: #1e1e1e;
+    --card-border: #333;
+    --text: #f0f0f0;
+    --text-muted: #888;
+    --success: #4caf7d;
+    --danger: #e05555;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--black);
+    color: var(--text);
+    min-height: 100vh;
+    background-image: repeating-linear-gradient(45deg, transparent, transparent 40px, rgba(255,208,0,0.015) 40px, rgba(255,208,0,0.015) 80px);
+  }
+  header {
+    background: var(--yellow);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 4px 20px rgba(255,208,0,0.3);
+  }
+  .logo { font-family: 'Bebas Neue', sans-serif; font-size: 26px; color: var(--black); letter-spacing: 2px; display: flex; align-items: center; gap: 10px; }
+  .logo-sub { font-family: 'Noto Sans JP', sans-serif; font-size: 10px; font-weight: 700; color: #333; line-height: 1.3; }
+  .header-right { display: flex; gap: 6px; }
+  .mode-btn { padding: 6px 14px; border-radius: 20px; border: 2px solid var(--black); font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: 'Noto Sans JP', sans-serif; background: transparent; color: var(--black); }
+  .mode-btn.active { background: var(--black); color: var(--yellow); }
+  .tabs { display: flex; border-bottom: 2px solid var(--card-border); padding: 0 24px; background: #161616; overflow-x: auto; }
+  .tab { padding: 14px 20px; cursor: pointer; font-size: 13px; font-weight: 700; color: var(--text-muted); border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.2s; white-space: nowrap; }
+  .tab.active { color: var(--yellow); border-bottom-color: var(--yellow); }
+  .tab:hover:not(.active) { color: var(--text); }
+  main { max-width: 960px; margin: 0 auto; padding: 24px 20px 60px; }
+  .section { display: none; }
+  .section.active { display: block; }
+  .notice-bar { background: rgba(255,208,0,0.08); border: 1px solid rgba(255,208,0,0.2); border-radius: 10px; padding: 12px 18px; font-size: 12px; color: rgba(255,208,0,0.8); margin-bottom: 20px; }
+  .month-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .month-title { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 2px; color: var(--yellow); }
+  .nav-arrow { background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+  .nav-arrow:hover { background: var(--yellow); color: var(--black); border-color: var(--yellow); }
+  .stats-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+  .stat-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 12px 16px; text-align: center; }
+  .stat-num { font-family: 'Bebas Neue', sans-serif; font-size: 26px; color: var(--yellow); line-height: 1; }
+  .stat-label { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 16px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-muted); }
+  .legend-dot { width: 9px; height: 9px; border-radius: 50%; }
+  .game-list { display: flex; flex-direction: column; gap: 10px; }
+  .game-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 16px 18px; display: grid; grid-template-columns: 72px 1fr auto; gap: 14px; align-items: center; transition: all 0.2s; cursor: pointer; position: relative; overflow: hidden; }
+  .game-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--card-border); border-radius: 12px 0 0 12px; }
+  .game-card.has-tickets::before { background: var(--yellow); }
+  .game-card.has-requested::before { background: #ff8c00; }
+  .game-card.has-confirmed::before { background: var(--success); }
+  .game-card:hover { border-color: rgba(255,208,0,0.3); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+  .game-date-day { font-size: 26px; font-weight: 900; line-height: 1; color: var(--yellow); }
+  .game-date-dow { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .game-date-time { font-size: 11px; color: var(--text-muted); }
+  .game-opponent { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+  .game-venue { font-size: 11px; color: var(--text-muted); }
+  .game-note { font-size: 10px; color: #ff8c00; margin-top: 2px; }
+  .ticket-badges { display: flex; flex-direction: column; gap: 5px; align-items: flex-end; }
+  .ticket-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border-radius: 7px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .badge-available { background: rgba(255,208,0,0.12); color: var(--yellow); border: 1px solid rgba(255,208,0,0.25); }
+  .badge-requested { background: rgba(255,140,0,0.12); color: #ff8c00; border: 1px solid rgba(255,140,0,0.25); }
+  .badge-confirmed { background: rgba(76,175,125,0.12); color: var(--success); border: 1px solid rgba(76,175,125,0.3); }
+  .badge-none { background: rgba(255,255,255,0.04); color: var(--text-muted); border: 1px solid rgba(255,255,255,0.07); }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.25s; backdrop-filter: blur(4px); }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal { background: #242424; border: 1px solid #444; border-radius: 18px; padding: 26px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; transform: translateY(16px); transition: transform 0.25s; }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-title { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 1px; color: var(--yellow); margin-bottom: 4px; }
+  .modal-subtitle { font-size: 12px; color: var(--text-muted); margin-bottom: 18px; }
+  .modal-close { float: right; background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; }
+  .modal-close:hover { color: var(--text); }
+  .ticket-item { background: #1a1a1a; border: 1px solid #333; border-radius: 11px; padding: 13px 15px; margin-bottom: 9px; }
+  .ticket-item-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 7px; flex-wrap: wrap; gap: 5px; }
+  .ticket-owner-label { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; }
+  .owner-wada-label { background: rgba(255,208,0,0.15); color: var(--yellow); }
+  .owner-ariga-label { background: rgba(64,160,255,0.15); color: #40a0ff; }
+  .ticket-seat { font-size: 14px; font-weight: 700; }
+  .ticket-price { font-size: 13px; color: var(--yellow); font-weight: 700; margin-top: 3px; }
+  .ticket-count { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .ticket-note-text { font-size: 12px; color: var(--text-muted); margin-top: 5px; font-style: italic; }
+  .ticket-status-row { margin-top: 9px; display: flex; justify-content: space-between; align-items: center; }
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 5px; display: block; }
+  .form-input, .form-select, .form-textarea { width: 100%; background: #1a1a1a; border: 1px solid #444; color: var(--text); padding: 10px 13px; border-radius: 9px; font-size: 14px; font-family: 'Noto Sans JP', sans-serif; transition: border-color 0.2s; }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--yellow); }
+  .form-select option { background: #1a1a1a; }
+  .form-textarea { min-height: 75px; resize: vertical; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .btn { padding: 9px 18px; border-radius: 9px; font-size: 13px; font-weight: 700; cursor: pointer; border: none; transition: all 0.2s; font-family: 'Noto Sans JP', sans-serif; display: inline-flex; align-items: center; gap: 5px; }
+  .btn-primary { background: var(--yellow); color: var(--black); }
+  .btn-primary:hover { background: #ffe033; transform: translateY(-1px); }
+  .btn-secondary { background: #2a2a2a; color: var(--text); border: 1px solid #444; }
+  .btn-secondary:hover { background: #333; }
+  .btn-success { background: rgba(76,175,125,0.15); color: var(--success); border: 1px solid rgba(76,175,125,0.3); }
+  .btn-danger { background: rgba(224,85,85,0.15); color: var(--danger); border: 1px solid rgba(224,85,85,0.3); }
+  .btn-sm { padding: 5px 12px; font-size: 11px; }
+  .owner-select { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+  .owner-chip { padding: 8px 18px; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
+  .owner-chip-wada { background: rgba(255,208,0,0.1); color: var(--yellow); border-color: rgba(255,208,0,0.3); }
+  .owner-chip-wada.selected, .owner-chip-wada:hover { background: rgba(255,208,0,0.25); border-color: var(--yellow); }
+  .owner-chip-ariga { background: rgba(64,160,255,0.1); color: #40a0ff; border-color: rgba(64,160,255,0.3); }
+  .owner-chip-ariga.selected, .owner-chip-ariga:hover { background: rgba(64,160,255,0.25); border-color: #40a0ff; }
+  .owner-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+  .owner-panel-title { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 1px; }
+  .owner-ticket-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 13px; padding: 15px 17px; margin-bottom: 10px; }
+  .owner-ticket-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 10px; }
+  .owner-ticket-date { font-size: 13px; font-weight: 700; }
+  .owner-ticket-game { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .request-item { background: rgba(255,140,0,0.06); border: 1px solid rgba(255,140,0,0.2); border-radius: 9px; padding: 10px 13px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .request-name { font-weight: 700; font-size: 13px; }
+  .request-contact { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .notify-link { display: flex; align-items: center; gap: 10px; padding: 13px 15px; border-radius: 11px; text-decoration: none; font-weight: 700; font-size: 13px; transition: all 0.2s; border: 1px solid transparent; cursor: pointer; }
+  .notify-link:hover { transform: translateY(-1px); }
+  .notify-line { background: #00B900; color: white; }
+  .notify-email { background: #2a2a2a; color: var(--text); border-color: #444; }
+  .notify-copy { background: #2a2a2a; color: var(--text); border-color: #444; }
+  .notify-options { display: flex; flex-direction: column; gap: 9px; margin-top: 14px; }
+  .payment-option { background: #1a1a1a; border: 1px solid #444; border-radius: 11px; padding: 13px 15px; margin-bottom: 9px; }
+  .payment-option-title { font-size: 13px; font-weight: 700; margin-bottom: 5px; }
+  .payment-option-detail { font-size: 12px; color: var(--text-muted); font-family: monospace; word-break: break-all; }
+  .request-history-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 13px; padding: 15px 17px; margin-bottom: 10px; }
+  .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--success); color: white; padding: 11px 22px; border-radius: 28px; font-size: 14px; font-weight: 700; z-index: 999; transition: transform 0.3s ease; box-shadow: 0 4px 18px rgba(0,0,0,0.4); }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .empty-state { text-align: center; padding: 50px 20px; color: var(--text-muted); }
+  .empty-icon { font-size: 42px; margin-bottom: 12px; }
+  @media (max-width: 600px) {
+    .form-row { grid-template-columns: 1fr; }
+    .game-card { grid-template-columns: 60px 1fr auto; gap: 8px; }
+    .game-date-day { font-size: 20px; }
+    main { padding: 14px 12px 60px; }
+    header { padding: 0 14px; }
+    .logo { font-size: 18px; gap: 6px; }
+  }
+
+  /* LOADING BAR */
+  #loadingBar {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--yellow) 0%, transparent 100%);
+    animation: loadingAnim 1.2s ease-in-out infinite;
+    z-index: 999;
+  }
+  @keyframes loadingAnim {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+</style>
+</head>
+<body>
+
+<div id="loadingBar"></div>
+<header>
+  <div class="logo">
+    🐯 TIGERS TICKET SHARE
+    <div class="logo-sub">阪神タイガース<br>チケットシェア</div>
+  </div>
+  <div class="header-right">
+    <button class="mode-btn active" id="btnMember" onclick="setMode('member')">メンバー</button>
+    <button class="mode-btn" id="btnOwner" onclick="setMode('owner')">オーナー</button>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" id="tab-calendar" onclick="setTab('calendar')">🗓 チケット一覧</div>
+  <div class="tab" id="tab-request" onclick="setTab('request')">📬 リクエスト履歴</div>
+  <div class="tab" id="tab-owner" onclick="setTab('owner')" style="display:none">⚾ オーナー管理</div>
+</div>
+
+<main>
+
+<div class="section active" id="section-calendar">
+  <div class="notice-bar">💡 黄色のラインがある試合はチケットが出品中です。クリックして詳細を確認・リクエストできます。</div>
+  <div id="gasSetupBanner" style="display:none;background:rgba(255,80,80,0.08);border:1px solid rgba(255,80,80,0.25);border-radius:10px;padding:12px 18px;margin-bottom:20px;align-items:center;gap:10px;font-size:12px;color:rgba(255,150,150,0.9)">
+    ⚙️ <strong>GAS連携の設定が必要です</strong>　このアプリはデモモードで動作中です。データはページを閉じると消えます。
+  </div>
+  <div class="stats-bar" id="statsBar"></div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div>出品中</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ff8c00"></div>リクエスト中</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--success)"></div>譲渡確定</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--text-muted)"></div>出品なし</div>
+  </div>
+  <div class="month-nav">
+    <button class="nav-arrow" onclick="changeMonth(-1)">◀</button>
+    <div class="month-title" id="monthTitle">2026年4月</div>
+    <button class="nav-arrow" onclick="changeMonth(1)">▶</button>
+  </div>
+  <div class="game-list" id="gameList"></div>
+</div>
+
+<div class="section" id="section-request">
+  <div class="notice-bar">📬 あなたのリクエスト状況を確認できます。個人名は一覧上では非表示です。</div>
+  <div id="requestHistory"></div>
+</div>
+
+<div class="section" id="section-owner">
+  <div class="owner-select">
+    <div class="owner-chip owner-chip-wada selected" id="chipWada" onclick="selectOwner('wada')">🎫 和田</div>
+    <div class="owner-chip owner-chip-ariga" id="chipAruga" onclick="selectOwner('aruga')">🎫 有賀</div>
+  </div>
+  <div class="owner-panel-header">
+    <div class="owner-panel-title" id="ownerPanelTitle">📋 和田 の管理画面</div>
+    <button class="btn btn-primary" onclick="openRegisterModal()">＋ チケット登録</button>
+  </div>
+
+  <div id="ownerTicketList"></div>
+</div>
+
+</main>
+
+<!-- GAME MODAL -->
+<div class="modal-overlay" id="modalGame">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modalGame')">✕</button>
+    <div class="modal-title" id="modalGameTitle"></div>
+    <div class="modal-subtitle" id="modalGameSub"></div>
+    <div id="modalGameTickets"></div>
+  </div>
+</div>
+
+<!-- REQUEST MODAL -->
+<div class="modal-overlay" id="modalRequest">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modalRequest')">✕</button>
+    <div class="modal-title">🙋 チケットをリクエスト</div>
+    <div class="modal-subtitle" id="requestTicketInfo"></div>
+    <div class="form-group" style="background:rgba(255,208,0,0.05);border:1px solid rgba(255,208,0,0.15);border-radius:10px;padding:12px 14px;margin-bottom:16px">
+      <div style="font-size:11px;color:rgba(255,208,0,0.7);font-weight:700;margin-bottom:6px">🔑 メンバー合言葉</div>
+      <input class="form-input" id="reqPassword" type="password" placeholder="合言葉を入力" style="background:#111">
+      <div style="font-size:11px;color:var(--text-muted);margin-top:5px">グループメンバーのみ知っている合言葉を入力してください</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">あなたの名前（グループ内公開）</label>
+      <input class="form-input" id="reqName" placeholder="例：田中">
+    </div>
+    <div class="form-group">
+      <label class="form-label">連絡先（LINE ID or メールアドレス）</label>
+      <input class="form-input" id="reqContact" placeholder="例：hanako_tigers">
+    </div>
+    <div class="form-group">
+      <label class="form-label">電子チケット送付先 LINE ID <span style="color:var(--yellow);font-size:11px">★必須</span></label>
+      <input class="form-input" id="reqLineId" placeholder="例：hanako_tigers（チケットの受け取りに使用）">
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px">オーナーがこのLINE IDに電子チケットを送付します</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">枚数</label>
+      <select class="form-select" id="reqCount"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">メッセージ（任意）</label>
+      <textarea class="form-textarea" id="reqMessage" placeholder="例：家族で行きます！🐯"></textarea>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-secondary" onclick="closeModal('modalRequest')">キャンセル</button>
+      <button class="btn btn-primary" style="flex:1" onclick="submitRequest()">📨 リクエストを送信</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAYMENT MODAL -->
+<div class="modal-overlay" id="modalPayment">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modalPayment')">✕</button>
+    <div class="modal-title">💴 お支払い情報</div>
+    <div class="modal-subtitle" id="paymentInfo"></div>
+    <div id="paymentOptions"></div>
+  </div>
+</div>
+
+<!-- OWNER PASSWORD MODAL -->
+<div class="modal-overlay" id="modalOwnerAuth">
+  <div class="modal" style="max-width:360px">
+    <button class="modal-close" onclick="closeModal('modalOwnerAuth')">✕</button>
+    <div class="modal-title">🔐 オーナー認証</div>
+    <div class="modal-subtitle">オーナー専用パスワードを入力してください</div>
+    <div class="form-group" style="margin-top:8px">
+      <input class="form-input" id="ownerAuthInput" type="password" placeholder="パスワードを入力" onkeydown="if(event.key==='Enter')checkOwnerAuth()">
+    </div>
+    <div id="ownerAuthError" style="color:var(--danger);font-size:12px;margin-top:-8px;margin-bottom:8px;display:none">パスワードが違います</div>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn btn-secondary" onclick="closeModal('modalOwnerAuth')">キャンセル</button>
+      <button class="btn btn-primary" style="flex:1" onclick="checkOwnerAuth()">🔓 ログイン</button>
+    </div>
+  </div>
+</div>
+
+<!-- REGISTER MODAL -->
+<div class="modal-overlay" id="modalRegister">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modalRegister')">✕</button>
+    <div class="modal-title">➕ チケット登録</div>
+    <div class="modal-subtitle" id="registerOwnerName">譲渡可能なチケットを登録してください</div>
+    <div class="form-group">
+      <label class="form-label">試合を選択</label>
+      <select class="form-select" id="regGame" onchange="updateVenueFromGame()"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">球場</label>
+      <input class="form-input" id="regVenue" placeholder="球場名" readonly style="background:#151515;color:rgba(255,255,255,0.5);cursor:default">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">席種</label>
+        <input class="form-input" id="regSeat" placeholder="例：ライト外野指定">
+      </div>
+      <div class="form-group">
+        <label class="form-label">枚数</label>
+        <select class="form-select" id="regCount">
+          <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">価格（1枚あたり・円）</label>
+      <input class="form-input" type="number" id="regPrice" placeholder="例：1900">
+    </div>
+    <div class="form-group">
+      <label class="form-label">PayPay ID（任意）</label>
+      <input class="form-input" id="regPaypay" placeholder="例：arugaterutomi">
+    </div>
+    <div class="form-group">
+      <label class="form-label">銀行口座（任意）</label>
+      <input class="form-input" id="regBank" placeholder="例：〇〇銀行 △△支店 普通 1234567 ワダタロウ">
+    </div>
+    <div class="form-group">
+      <label class="form-label">備考（任意）</label>
+      <textarea class="form-textarea" id="regNote" placeholder="例：連番2席、通路側あり"></textarea>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-secondary" onclick="closeModal('modalRegister')">キャンセル</button>
+      <button class="btn btn-primary" style="flex:1" onclick="submitRegister()">登録する</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const GAMES_2025 = [
+  // ── 3月 ──
+  {id:'g0327',month:3,day:27,dow:'金',time:'18:15',opponent:'vs 読売ジャイアンツ',venue:'東京ドーム'},
+  {id:'g0328',month:3,day:28,dow:'土',time:'14:00',opponent:'vs 読売ジャイアンツ',venue:'東京ドーム'},
+  {id:'g0329',month:3,day:29,dow:'日',time:'14:00',opponent:'vs 読売ジャイアンツ',venue:'東京ドーム'},
+  {id:'g0331',month:3,day:31,dow:'火',time:'18:00',opponent:'vs 横浜DeNAベイスターズ',venue:'京セラドーム大阪'},
+  // ── 4月 ──
+  {id:'g0401',month:4,day:1, dow:'水',time:'18:00',opponent:'vs 横浜DeNAベイスターズ',venue:'京セラドーム大阪'},
+  {id:'g0402',month:4,day:2, dow:'木',time:'18:00',opponent:'vs 横浜DeNAベイスターズ',venue:'京セラドーム大阪'},
+  {id:'g0403',month:4,day:3, dow:'金',time:'18:00',opponent:'vs 広島東洋カープ',venue:'マツダスタジアム'},
+  {id:'g0404',month:4,day:4, dow:'土',time:'14:00',opponent:'vs 広島東洋カープ',venue:'マツダスタジアム'},
+  {id:'g0405',month:4,day:5, dow:'日',time:'14:00',opponent:'vs 広島東洋カープ',venue:'マツダスタジアム'},
+  {id:'g0407',month:4,day:7, dow:'火',time:'18:00',opponent:'vs 東京ヤクルトスワローズ',venue:'阪神甲子園球場'},
+  {id:'g0408',month:4,day:8, dow:'水',time:'18:00',opponent:'vs 東京ヤクルトスワローズ',venue:'阪神甲子園球場'},
+  {id:'g0409',month:4,day:9, dow:'木',time:'18:00',opponent:'vs 東京ヤクルトスワローズ',venue:'阪神甲子園球場'},
+  {id:'g0410',month:4,day:10,dow:'金',time:'18:00',opponent:'vs 中日ドラゴンズ',venue:'バンテリンドーム'},
+  {id:'g0411',month:4,day:11,dow:'土',time:'14:00',opponent:'vs 中日ドラゴンズ',venue:'バンテリンドーム'},
+  {id:'g0412',month:4,day:12,dow:'日',time:'13:30',opponent:'vs 中日ドラゴンズ',venue:'バンテリンドーム'},
+  {id:'g0414',month:4,day:14,dow:'火',time:'18:00',opponent:'vs 読売ジャイアンツ',venue:'阪神甲子園球場'},
+  {id:'g0415',month:4,day:15,dow:'水',time:'18:00',opponent:'vs 読売ジャイアンツ',venue:'阪神甲子園球場'},
+  {id:'g0416',month:4,day:16,dow:'木',time:'18:00',opponent:'vs 読売ジャイアンツ',venue:'阪神甲子園球場'},
+  {id:'g0417',month:4,day:17,dow:'金',time:'18:00',opponent:'vs 中日ドラゴンズ',venue:'阪神甲子園球場'},
+  {id:'g0418',month:4,day:18,dow:'土',time:'14:00',opponent:'vs 中日ドラゴンズ',venue:'阪神甲子園球場'},
+  {id:'g0419',month:4,day:19,dow:'日',time:'14:00',opponent:'vs 中日ドラゴンズ',venue:'阪神甲子園球場'},
+  {id:'g0421',month:4,day:21,dow:'火',time:'17:45',opponent:'vs 横浜DeNAベイスターズ',venue:'横浜スタジアム'},
+  {id:'g0422',month:4,day:22,dow:'水',time:'17:45',opponent:'vs 横浜DeNAベイスターズ',venue:'横浜スタジアム'},
+  {id:'g0423',month:4,day:23,dow:'木',time:'17:45',opponent:'vs 横浜DeNAベイスターズ',venue:'横浜スタジアム'},
+  {id:'g0425',month:4,day:25,dow:'土',time:'14:00',opponent:'vs 読売ジャイアンツ',venue:'阪神甲子園球場'},
+  {id:'g0426',month:4,day:26,dow:'日',time:'14:00',opponent:'vs 読売ジャイアンツ',venue:'阪神甲子園球場'},
+  {id:'g0428',month:4,day:28,dow:'火',time:'18:00',opponent:'vs 東京ヤクルトスワローズ',venue:'神宮球場'},
+  {id:'g0429',month:4,day:29,dow:'水',time:'14:00',opponent:'vs 東京ヤクルトスワローズ',venue:'神宮球場'},
+  {id:'g0430',month:4,day:30,dow:'木',time:'18:00',opponent:'vs 東京ヤクルトスワローズ',venue:'神宮球場'},
+  // ── 5月 ──
+  {id:'g0501',month:5,day:1, dow:'金',time:'18:00',opponent:'vs 東京ヤクルトスワローズ',venue:'阪神甲子園球場'},
+  {id:'g0502',month:5,day:2, dow:'土',time:'14:00',opponent:'vs 東京ヤクルトスワローズ',venue:'阪神甲子園球場'},
+  {id:'g0503',month:5,day:3, dow:'日',time:'14:00',opponent:'vs 東京ヤクルトスワローズ',venue:'阪神甲子園球場'},
+  {id:'g0504',month:5,day:4, dow:'祝',time:'14:30',opponent:'vs 中日ドラゴンズ',venue:'バンテリンドーム'},
+  {id:'g0505',month:5,day:5, dow:'祝',time:'14:00',opponent:'vs 中日ドラゴンズ',venue:'バンテリンドーム'},
+  {id:'g0506',month:5,day:6, dow:'水',time:'14:00',opponent:'vs 中日ドラゴンズ',venue:'バンテリンドーム'},
+  {id:'g0508',month:5,day:8, dow:'金',time:'18:00',opponent:'vs 中日ドラゴンズ',venue:'阪神甲子園球場'},
+  {id:'g0509',month:5,day:9, dow:'土',time:'14:00',opponent:'vs 中日ドラゴンズ',venue:'阪神甲子園球場'},
+  {id:'g0510',month:5,day:10,dow:'日',time:'14:00',opponent:'vs 中日ドラゴンズ',venue:'阪神甲子園球場'},
+  {id:'g0512',month:5,day:12,dow:'火',time:'18:00',opponent:'vs 東京ヤクルトスワローズ',venue:'神宮球場'},
+  {id:'g0513',month:5,day:13,dow:'水',time:'18:00',opponent:'vs 東京ヤクルトスワローズ',venue:'神宮球場'},
+  {id:'g0515',month:5,day:15,dow:'金',time:'18:00',opponent:'vs 広島東洋カープ',venue:'阪神甲子園球場'},
+  {id:'g0516',month:5,day:16,dow:'土',time:'14:00',opponent:'vs 広島東洋カープ',venue:'阪神甲子園球場'},
+  {id:'g0517',month:5,day:17,dow:'日',time:'14:00',opponent:'vs 広島東洋カープ',venue:'阪神甲子園球場'},
+  {id:'g0519',month:5,day:19,dow:'火',time:'18:00',opponent:'vs 読売ジャイアンツ',venue:'倉敷マスカットスタジアム'},
+  {id:'g0520',month:5,day:20,dow:'水',time:'18:00',opponent:'vs 読売ジャイアンツ',venue:'阪神甲子園球場'},
+  {id:'g0521',month:5,day:21,dow:'木',time:'18:00',opponent:'vs 読売ジャイアンツ',venue:'阪神甲子園球場'},
+  {id:'g0522',month:5,day:22,dow:'金',time:'18:00',opponent:'vs 読売ジャイアンツ',venue:'東京ドーム'},
+  {id:'g0523',month:5,day:23,dow:'土',time:'18:00',opponent:'vs 読売ジャイアンツ',venue:'東京ドーム'},
+  {id:'g0524',month:5,day:24,dow:'日',time:'14:00',opponent:'vs 読売ジャイアンツ',venue:'東京ドーム'},
+  {id:'g0526',month:5,day:26,dow:'火',time:'18:00',opponent:'vs 広島東洋カープ',venue:'阪神甲子園球場'},
+  {id:'g0527',month:5,day:27,dow:'水',time:'18:00',opponent:'vs 広島東洋カープ',venue:'阪神甲子園球場'},
+  {id:'g0528',month:5,day:28,dow:'木',time:'18:00',opponent:'vs 広島東洋カープ',venue:'阪神甲子園球場'},
+  {id:'g0529',month:5,day:29,dow:'金',time:'18:00',opponent:'vs 千葉ロッテマリーンズ',venue:'ZOZOマリンスタジアム'},
+  {id:'g0530',month:5,day:30,dow:'土',time:'14:00',opponent:'vs 千葉ロッテマリーンズ',venue:'ZOZOマリンスタジアム'},
+  {id:'g0531',month:5,day:31,dow:'日',time:'13:00',opponent:'vs 千葉ロッテマリーンズ',venue:'ZOZOマリンスタジアム'},
+  // ── 6月（交流戦含む） ──
+  {id:'g0601',month:6,day:1, dow:'月',time:'18:00',opponent:'vs 千葉ロッテマリーンズ',venue:'ZOZOマリンスタジアム',note:'予備日'},
+  {id:'g0602',month:6,day:2, dow:'火',time:'18:00',opponent:'vs 横浜DeNAベイスターズ',venue:'阪神甲子園球場'},
+  {id:'g0603',month:6,day:3, dow:'水',time:'18:00',opponent:'vs 横浜DeNAベイスターズ',venue:'阪神甲子園球場'},
+  {id:'g0604',month:6,day:4, dow:'木',time:'18:00',opponent:'vs 横浜DeNAベイスターズ',venue:'阪神甲子園球場'},
+  {id:'g0605',month:6,day:5, dow:'金',time:'18:00',opponent:'vs オリックス・バファローズ【交流戦】',venue:'阪神甲子園球場'},
+  {id:'g0606',month:6,day:6, dow:'土',time:'14:00',opponent:'vs オリックス・バファローズ【交流戦】',venue:'阪神甲子園球場'},
+  {id:'g0607',month:6,day:7, dow:'日',time:'14:00',opponent:'vs オリックス・バファローズ【交流戦】',venue:'阪神甲子園球場'},
+  {id:'g0608',month:6,day:8, dow:'月',time:'18:00',opponent:'vs オリックス・バファローズ【交流戦】',venue:'阪神甲子園球場',note:'予備日'},
+  {id:'g0609',month:6,day:9, dow:'火',time:'18:00',opponent:'vs 福岡ソフトバンクホークス【交流戦】',venue:'みずほPayPayドーム'},
+  {id:'g0610',month:6,day:10,dow:'水',time:'18:00',opponent:'vs 福岡ソフトバンクホークス【交流戦】',venue:'みずほPayPayドーム'},
+  {id:'g0611',month:6,day:11,dow:'木',time:'18:00',opponent:'vs 福岡ソフトバンクホークス【交流戦】',venue:'みずほPayPayドーム'},
+  {id:'g0612',month:6,day:12,dow:'金',time:'18:00',opponent:'vs オリックス・バファローズ【交流戦】',venue:'京セラドーム大阪'},
+  {id:'g0613',month:6,day:13,dow:'土',time:'15:00',opponent:'vs オリックス・バファローズ【交流戦】',venue:'京セラドーム大阪'},
+  {id:'g0614',month:6,day:14,dow:'日',time:'13:00',opponent:'vs オリックス・バファローズ【交流戦】',venue:'京セラドーム大阪'},
+  {id:'g0619',month:6,day:19,dow:'金',time:'18:15',opponent:'vs 横浜DeNAベイスターズ',venue:'横浜スタジアム'},
+  {id:'g0620',month:6,day:20,dow:'土',time:'18:15',opponent:'vs 横浜DeNAベイスターズ',venue:'横浜スタジアム'},
+  {id:'g0621',month:6,day:21,dow:'日',time:'18:15',opponent:'vs 横浜DeNAベイスターズ',venue:'横浜スタジアム'},
+  {id:'g0623',month:6,day:23,dow:'火',time:'18:00',opponent:'vs 広島東洋カープ',venue:'阪神甲子園球場'},
+  {id:'g0624',month:6,day:24,dow:'水',time:'18:00',opponent:'vs 広島東洋カープ',venue:'阪神甲子園球場'},
+  {id:'g0625',month:6,day:25,dow:'木',time:'18:00',opponent:'vs 広島東洋カープ',venue:'阪神甲子園球場'},
+  {id:'g0626',month:6,day:26,dow:'金',time:'18:00',opponent:'vs 広島東洋カープ',venue:'マツダスタジアム'},
+  {id:'g0627',month:6,day:27,dow:'土',time:'14:00',opponent:'vs 広島東洋カープ',venue:'マツダスタジアム'},
+  {id:'g0628',month:6,day:28,dow:'日',time:'14:00',opponent:'vs 広島東洋カープ',venue:'マツダスタジアム'},
+  {id:'g0630',month:6,day:30,dow:'火',time:'18:00',opponent:'vs 東京ヤクルトスワローズ',venue:'阪神甲子園球場'},
+  // ── 7月 ──
+  {id:'g0701',month:7,day:1, dow:'水',time:'18:00',opponent:'vs 東京ヤクルトスワローズ',venue:'阪神甲子園球場'},
+  {id:'g0702',month:7,day:2, dow:'木',time:'18:00',opponent:'vs 東京ヤクルトスワローズ',venue:'阪神甲子園球場'},
+  {id:'g0703',month:7,day:3, dow:'金',time:'18:00',opponent:'vs 読売ジャイアンツ',venue:'阪神甲子園球場'},
+  {id:'g0704',month:7,day:4, dow:'土',time:'18:00',opponent:'vs 読売ジャイアンツ',venue:'阪神甲子園球場'},
+  {id:'g0705',month:7,day:5, dow:'日',time:'18:00',opponent:'vs 読売ジャイアンツ',venue:'阪神甲子園球場'},
+  {id:'g0707',month:7,day:7, dow:'火',time:'18:00',opponent:'vs 読売ジャイアンツ',venue:'東京ドーム'},
+  {id:'g0708',month:7,day:8, dow:'水',time:'18:00',opponent:'vs 読売ジャイアンツ',venue:'東京ドーム'},
+  {id:'g0709',month:7,day:9, dow:'木',time:'18:00',opponent:'vs 読売ジャイアンツ',venue:'東京ドーム'},
+  {id:'g0710',month:7,day:10,dow:'金',time:'18:00',opponent:'vs 中日ドラゴンズ',venue:'阪神甲子園球場'},
+  {id:'g0711',month:7,day:11,dow:'土',time:'18:00',opponent:'vs 中日ドラゴンズ',venue:'阪神甲子園球場'},
+  {id:'g0712',month:7,day:12,dow:'日',time:'18:00',opponent:'vs 中日ドラゴンズ',venue:'阪神甲子園球場'},
+  // 7/13-17 オールスター休み
+  {id:'g0718',month:7,day:18,dow:'土',time:'18:00',opponent:'vs 横浜DeNAベイスターズ',venue:'阪神甲子園球場'},
+  {id:'g0719',month:7,day:19,dow:'日',time:'18:00',opponent:'vs 横浜DeNAベイスターズ',venue:'阪神甲子園球場'},
+  {id:'g0721',month:7,day:21,dow:'火',time:'18:00',opponent:'vs 広島東洋カープ',venue:'阪神甲子園球場'},
+  {id:'g0722',month:7,day:22,dow:'水',time:'18:00',opponent:'vs 広島東洋カープ',venue:'阪神甲子園球場'},
+  {id:'g0723',month:7,day:23,dow:'木',time:'18:00',opponent:'vs 広島東洋カープ',venue:'阪神甲子園球場'},
+  {id:'g0725',month:7,day:25,dow:'土',time:'18:00',opponent:'vs 東京ヤクルトスワローズ',venue:'神宮球場'},
+  {id:'g0726',month:7,day:26,dow:'日',time:'18:00',opponent:'vs 東京ヤクルトスワローズ',venue:'神宮球場'},
+  {id:'g0728',month:7,day:28,dow:'火',time:'18:00',opponent:'vs 横浜DeNAベイスターズ',venue:'横浜スタジアム'},
+  {id:'g0729',month:7,day:29,dow:'水',time:'18:00',opponent:'vs 横浜DeNAベイスターズ',venue:'横浜スタジアム'},
+  {id:'g0731',month:7,day:31,dow:'金',time:'18:00',opponent:'vs 中日ドラゴンズ',venue:'バンテリンドーム'},
+  // ── 8月 ──
+  {id:'g0801',month:8,day:1, dow:'土',time:'18:00',opponent:'vs 中日ドラゴンズ',venue:'バンテリンドーム'},
+  {id:'g0802',month:8,day:2, dow:'日',time:'18:00',opponent:'vs 中日ドラゴンズ',venue:'バンテリンドーム'},
+  {id:'g0804',month:8,day:4, dow:'火',time:'18:00',opponent:'vs 広島東洋カープ',venue:'マツダスタジアム'},
+  {id:'g0805',month:8,day:5, dow:'水',time:'18:00',opponent:'vs 広島東洋カープ',venue:'マツダスタジアム'},
+  {id:'g0806',month:8,day:6, dow:'木',time:'18:00',opponent:'vs 広島東洋カープ',venue:'マツダスタジアム'},
+  {id:'g0811',month:8,day:11,dow:'火',time:'18:00',opponent:'vs 東京ヤクルトスワローズ',venue:'神宮球場'},
+  {id:'g0812',month:8,day:12,dow:'水',time:'18:00',opponent:'vs 東京ヤクルトスワローズ',venue:'神宮球場'},
+  {id:'g0814',month:8,day:14,dow:'金',time:'18:00',opponent:'vs 横浜DeNAベイスターズ',venue:'阪神甲子園球場'},
+  {id:'g0815',month:8,day:15,dow:'土',time:'18:00',opponent:'vs 横浜DeNAベイスターズ',venue:'阪神甲子園球場'},
+  {id:'g0816',month:8,day:16,dow:'日',time:'18:00',opponent:'vs 横浜DeNAベイスターズ',venue:'阪神甲子園球場'},
+  {id:'g0818',month:8,day:18,dow:'火',time:'18:00',opponent:'vs 読売ジャイアンツ',venue:'阪神甲子園球場'},
+  {id:'g0819',month:8,day:19,dow:'水',time:'18:00',opponent:'vs 読売ジャイアンツ',venue:'阪神甲子園球場'},
+  {id:'g0820',month:8,day:20,dow:'木',time:'18:00',opponent:'vs 読売ジャイアンツ',venue:'阪神甲子園球場'},
+  {id:'g0821',month:8,day:21,dow:'金',time:'18:00',opponent:'vs 東京ヤクルトスワローズ',venue:'阪神甲子園球場'},
+  {id:'g0822',month:8,day:22,dow:'土',time:'18:00',opponent:'vs 東京ヤクルトスワローズ',venue:'阪神甲子園球場'},
+  {id:'g0823',month:8,day:23,dow:'日',time:'18:00',opponent:'vs 東京ヤクルトスワローズ',venue:'阪神甲子園球場'},
+  {id:'g0825',month:8,day:25,dow:'火',time:'18:00',opponent:'vs 中日ドラゴンズ',venue:'バンテリンドーム'},
+  {id:'g0826',month:8,day:26,dow:'水',time:'18:00',opponent:'vs 中日ドラゴンズ',venue:'バンテリンドーム'},
+  {id:'g0827',month:8,day:27,dow:'木',time:'18:00',opponent:'vs 中日ドラゴンズ',venue:'バンテリンドーム'},
+  {id:'g0829',month:8,day:29,dow:'土',time:'18:00',opponent:'vs 読売ジャイアンツ',venue:'阪神甲子園球場'},
+  {id:'g0830',month:8,day:30,dow:'日',time:'18:00',opponent:'vs 読売ジャイアンツ',venue:'阪神甲子園球場'},
+  {id:'g0831',month:8,day:31,dow:'月',time:'18:00',opponent:'vs 読売ジャイアンツ',venue:'阪神甲子園球場'},
+  // ── 9月 ──
+  {id:'g0901',month:9,day:1, dow:'火',time:'18:00',opponent:'vs 広島東洋カープ',venue:'マツダスタジアム'},
+  {id:'g0902',month:9,day:2, dow:'水',time:'18:00',opponent:'vs 広島東洋カープ',venue:'マツダスタジアム'},
+  {id:'g0903',month:9,day:3, dow:'木',time:'18:00',opponent:'vs 広島東洋カープ',venue:'マツダスタジアム'},
+  {id:'g0905',month:9,day:5, dow:'土',time:'18:00',opponent:'vs 広島東洋カープ',venue:'阪神甲子園球場'},
+  {id:'g0906',month:9,day:6, dow:'日',time:'18:00',opponent:'vs 広島東洋カープ',venue:'阪神甲子園球場'},
+  {id:'g0907',month:9,day:7, dow:'月',time:'18:00',opponent:'vs 広島東洋カープ',venue:'阪神甲子園球場'},
+  {id:'g0909',month:9,day:9, dow:'水',time:'18:00',opponent:'vs 横浜DeNAベイスターズ',venue:'阪神甲子園球場'},
+  {id:'g0910',month:9,day:10,dow:'木',time:'18:00',opponent:'vs 横浜DeNAベイスターズ',venue:'阪神甲子園球場'},
+  {id:'g0911',month:9,day:11,dow:'金',time:'18:00',opponent:'vs 横浜DeNAベイスターズ',venue:'阪神甲子園球場'},
+  {id:'g0912',month:9,day:12,dow:'土',time:'18:00',opponent:'vs 読売ジャイアンツ',venue:'東京ドーム'},
+  {id:'g0913',month:9,day:13,dow:'日',time:'14:00',opponent:'vs 読売ジャイアンツ',venue:'東京ドーム'},
+  {id:'g0915',month:9,day:15,dow:'火',time:'18:00',opponent:'vs 中日ドラゴンズ',venue:'阪神甲子園球場'},
+  {id:'g0916',month:9,day:16,dow:'水',time:'18:00',opponent:'vs 中日ドラゴンズ',venue:'阪神甲子園球場'},
+  {id:'g0917',month:9,day:17,dow:'木',time:'18:00',opponent:'vs 中日ドラゴンズ',venue:'阪神甲子園球場'},
+  {id:'g0919',month:9,day:19,dow:'土',time:'18:00',opponent:'vs 横浜DeNAベイスターズ',venue:'横浜スタジアム'},
+  {id:'g0920',month:9,day:20,dow:'日',time:'18:00',opponent:'vs 横浜DeNAベイスターズ',venue:'横浜スタジアム'},
+  {id:'g0922',month:9,day:22,dow:'火',time:'18:00',opponent:'vs 東京ヤクルトスワローズ',venue:'神宮球場'},
+  {id:'g0923',month:9,day:23,dow:'祝',time:'14:00',opponent:'vs 東京ヤクルトスワローズ',venue:'神宮球場'},
+  {id:'g0925',month:9,day:25,dow:'木',time:'18:00',opponent:'vs 読売ジャイアンツ',venue:'阪神甲子園球場'},
+  {id:'g0926',month:9,day:26,dow:'金',time:'18:00',opponent:'vs 読売ジャイアンツ',venue:'阪神甲子園球場'},
+  {id:'g0927',month:9,day:27,dow:'土',time:'14:00',opponent:'vs 読売ジャイアンツ',venue:'阪神甲子園球場'},
+  {id:'g0929',month:9,day:29,dow:'月',time:'18:00',opponent:'vs 東京ヤクルトスワローズ',venue:'阪神甲子園球場'},
+  {id:'g0930',month:9,day:30,dow:'火',time:'18:00',opponent:'vs 東京ヤクルトスワローズ',venue:'阪神甲子園球場'},
+  // ── 10月 ──
+  {id:'g1001',month:10,day:1, dow:'木',time:'18:00',opponent:'vs 東京ヤクルトスワローズ',venue:'阪神甲子園球場'},
+  {id:'g1003',month:10,day:3, dow:'土',time:'14:00',opponent:'vs 中日ドラゴンズ',venue:'バンテリンドーム'},
+  {id:'g1004',month:10,day:4, dow:'日',time:'14:00',opponent:'vs 中日ドラゴンズ',venue:'バンテリンドーム'},
+];
+
+
+// ============================================================
+// ⚙️ GAS設定 ── デプロイ後のURLをここに貼り付けてください
+// ============================================================
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbztSSiG40Q_gyFe1o1r6W4JbFahdwLD7UNr8hNAn80dg62XIIbs9iHX2yFD0rwnvaTu/exec';
+const GAS_READY = GAS_URL.indexOf('YOUR_DEPLOYMENT_ID') === -1;
+
+// ===== グループ合言葉（オーナーが変更してください） =====
+const GROUP_PASSWORD = 'anatora2026';
+const OWNER_PASSWORD  = 'toratkt';
+
+// ===== OWNERS =====
+const OWNERS = {
+  wada: {
+    name: '和田',
+    lineId: 'wada_line_id',
+    email: 'wada@example.com',
+    paypay: 'wadataro',
+    bank: '〇〇銀行 △△支店 普通 1234567 ワダタロウ',
+    defaultSeat: '',
+    defaultCount: '2',
+    defaultPrice: '',
+  },
+  aruga: {
+    name: '有賀',
+    lineId: 'arugaterutomi',
+    email: 'aruga@example.com',
+    paypay: 'arugaterutomi',
+    bank: '三井住友銀行 本店営業部 普通 2418640 アルガテルトミ',
+    defaultSeat: 'ライト外野指定',
+    defaultCount: '2',
+    defaultPrice: '1900',
+  }
+};
+
+// ===== STATE =====
+let tickets = [];
+let myRequests = [];
+let currentMonth = 3;
+let currentMode = 'member';
+let currentOwner = 'wada'; // 'wada' or 'aruga'
+let pendingRequest = null;
+let isLoading = false;
+
+// ============================================================
+// GAS API 通信
+// ============================================================
+// GAS通信はすべてGET（CORS対策）
+async function gasCall(action, payload = {}) {
+  if (!GAS_READY) throw new Error('GAS URLが未設定です。HTMLファイルのGAS_URLを設定してください。');
+  const params = new URLSearchParams({ action, ...payload });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10000);
+  try {
+    const res = await fetch(`${GAS_URL}?${params}`, { signal: controller.signal, redirect: 'follow' });
+    clearTimeout(timer);
+    const text = await res.text();
+    let json;
+    try { json = JSON.parse(text); }
+    catch(e) { throw new Error('GASレスポンスエラー: ' + text.slice(0, 200)); }
+    if (json.error) throw new Error(json.error);
+    return json;
+  } catch(e) {
+    clearTimeout(timer);
+    throw e;
+  }
+}
+
+async function gasPost(action, payload = {}) {
+  return gasCall(action, payload);
+}
+
+// ============================================================
+// 初期化・データ読み込み
+// ============================================================
+async function init() {
+  setLoading(false);   // 初期化時に必ずローディングをOFF
+  populateRegisterGameSelect();
+  renderGameList();    // GAS読み込み前でもゲーム一覧を表示
+  renderStats();
+  await loadTickets(); // GASデータで上書き（or デモモード表示）
+}
+
+async function loadTickets() {
+  if (!GAS_READY) {
+    // GAS未設定 → デモモードで即起動
+    document.getElementById('gasSetupBanner').style.display = 'flex';
+    setLoading(false);
+    renderStats();
+    renderGameList();
+    return;
+  }
+  document.getElementById('gasSetupBanner').style.display = 'none';
+  setLoading(true);
+  try {
+    // 10秒タイムアウト
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10000);
+    const params = new URLSearchParams({ action: 'getTickets' });
+    const res = await fetch(`${GAS_URL}?${params}`, { signal: controller.signal, redirect: 'follow' });
+    clearTimeout(timer);
+    const text = await res.text();
+    const json = JSON.parse(text);
+    tickets = json.tickets || [];
+    renderStats();
+    renderGameList();
+  } catch (e) {
+    const msg = e.name === 'AbortError' ? 'GAS接続タイムアウト（10秒）' : e.message;
+    showToast('⚠️ ' + msg, true);
+    renderStats();
+    renderGameList();
+  } finally {
+    setLoading(false);
+  }
+}
+
+function setLoading(on) {
+  isLoading = on;
+  const el = document.getElementById('loadingBar');
+  if (el) el.style.display = on ? 'block' : 'none';
+}
+
+// ============================================================
+// 統計・ゲーム一覧
+// ============================================================
+function renderStats() {
+  const av = tickets.filter(t => t.status === 'available').length;
+  const rq = tickets.filter(t => t.status === 'requested').length;
+  const cf = tickets.filter(t => t.status === 'confirmed').length;
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${av}</div><div class="stat-label">🎫 出品中</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#ff8c00">${rq}</div><div class="stat-label">📬 リクエスト中</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--success)">${cf}</div><div class="stat-label">✅ 譲渡確定</div></div>`;
+}
+
+function renderGameList() {
+  const games = GAMES_2025.filter(g => g.month === currentMonth);
+  document.getElementById('monthTitle').textContent = `2026年${currentMonth}月`;
+  if (!games.length) {
+    document.getElementById('gameList').innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div><p>この月のホーム試合はありません</p></div>';
+    return;
+  }
+  document.getElementById('gameList').innerHTML = games.map(game => {
+    const gt = tickets.filter(t => t.gameId === game.id);
+    let statusClass = '';
+    let badges = '';
+    if (!gt.length) {
+      badges = `<div class="ticket-badge badge-none">出品なし</div>`;
+    } else {
+      gt.forEach(t => {
+        if (t.status === 'confirmed') badges += `<div class="ticket-badge badge-confirmed">✅ 譲渡確定</div>`;
+        else if (t.status === 'requested') badges += `<div class="ticket-badge badge-requested">📬 受付中</div>`;
+        else badges += `<div class="ticket-badge badge-available">🎫 ${t.count}枚 空き</div>`;
+      });
+      statusClass = gt.some(t => t.status === 'available') ? 'has-tickets'
+        : gt.some(t => t.status === 'requested') ? 'has-requested' : 'confirmed-only';
+    }
+    const homeTag = (game.venue === '阪神甲子園球場' || game.venue === '京セラドーム大阪') ? '' : `<span style="font-size:10px;background:rgba(255,255,255,0.06);border:1px solid #444;padding:1px 5px;border-radius:4px;margin-left:6px;color:var(--text-muted)">ビジター</span>`;
+    return `
+      <div class="game-card ${statusClass}" onclick="openGameModal('${game.id}')">
+        <div class="game-date-block">
+          <div class="game-date-day">${game.day}</div>
+          <div class="game-date-dow">${game.dow}</div>
+          <div class="game-date-time">${game.time}</div>
+        </div>
+        <div class="game-info">
+          <div class="game-opponent">${game.opponent}</div>
+          <div class="game-venue">📍 ${game.venue}${homeTag}</div>
+          ${game.note ? `<div class="game-note">📌 ${game.note}</div>` : ''}
+        </div>
+        <div class="ticket-badges">${badges}</div>
+      </div>`;
+  }).join('');
+}
+
+// ============================================================
+// 試合詳細モーダル
+// ============================================================
+function openGameModal(gameId) {
+  const game = GAMES_2025.find(g => g.id === gameId);
+  const gt = tickets.filter(t => t.gameId === gameId);
+  document.getElementById('modalGameTitle').textContent = `${game.month}/${game.day}（${game.dow}）${game.opponent}`;
+  document.getElementById('modalGameSub').textContent = `📍 ${game.venue}　⏰ ${game.time}`;
+  if (!gt.length) {
+    document.getElementById('modalGameTickets').innerHTML = '<div class="empty-state" style="padding:30px 0"><div class="empty-icon">🎫</div><p>この試合のチケットは出品されていません</p></div>';
+  } else {
+    document.getElementById('modalGameTickets').innerHTML = gt.map(t => {
+      const ownerLabel = t.owner === 'wada'
+        ? `<span class="ticket-owner-label owner-wada-label">和田</span>`
+        : `<span class="ticket-owner-label owner-ariga-label">有賀</span>`;
+      const statusBadge = t.status === 'confirmed' ? `<div class="ticket-badge badge-confirmed">✅ 譲渡確定済み</div>`
+        : t.status === 'requested' ? `<div class="ticket-badge badge-requested">📬 リクエスト受付中</div>`
+        : `<div class="ticket-badge badge-available">🎫 出品中</div>`;
+      const actionBtn = t.status === 'available'
+        ? `<button class="btn btn-primary btn-sm" onclick="openRequestModal('${t.id}')">🙋 リクエスト</button>`
+        : t.status === 'confirmed' ? `<span style="font-size:12px;color:var(--text-muted)">この席は確定済みです</span>`
+        : `<span style="font-size:12px;color:#ff8c00">リクエスト受付中</span>`;
+      return `
+        <div class="ticket-item">
+          <div class="ticket-item-header">${ownerLabel}${statusBadge}</div>
+          <div class="ticket-seat">🪑 ${t.seat}</div>
+          <div class="ticket-price">¥${Number(t.price).toLocaleString()} / 枚</div>
+          <div class="ticket-count">📦 ${t.count}枚出品</div>
+          ${t.note ? `<div class="ticket-note">📝 ${t.note}</div>` : ''}
+          <div class="ticket-status-row" style="margin-top:10px">${actionBtn}</div>
+        </div>`;
+    }).join('');
+  }
+  openModal('modalGame');
+}
+
+// ============================================================
+// リクエスト送信
+// ============================================================
+function openRequestModal(ticketId) {
+  const t = tickets.find(x => x.id === ticketId);
+  const game = GAMES_2025.find(g => g.id === t.gameId);
+  pendingRequest = { ticketId };
+  document.getElementById('requestTicketInfo').textContent = `${game.month}/${game.day} ${game.opponent} ／ ${t.seat}`;
+  document.getElementById('reqCount').innerHTML = Array.from({ length: t.count }, (_, i) =>
+    `<option value="${i + 1}">${i + 1}枚</option>`).join('');
+  document.getElementById('reqPassword').value = '';
+  document.getElementById('reqName').value = '';
+  document.getElementById('reqContact').value = '';
+  document.getElementById('reqMessage').value = '';
+  document.getElementById('reqLineId').value = '';
+  closeModal('modalGame');
+  openModal('modalRequest');
+}
+
+async function submitRequest() {
+  const pass = document.getElementById('reqPassword').value.trim();
+  if (pass !== GROUP_PASSWORD) {
+    document.getElementById('reqPassword').style.borderColor = 'var(--danger)';
+    alert('合言葉が違います。グループメンバーのみリクエストできます。');
+    return;
+  }
+  document.getElementById('reqPassword').style.borderColor = '';
+  const name = document.getElementById('reqName').value.trim();
+  const contact = document.getElementById('reqContact').value.trim();
+  const lineId = document.getElementById('reqLineId').value.trim();
+  const count = parseInt(document.getElementById('reqCount').value);
+  const message = document.getElementById('reqMessage').value.trim();
+  if (!name || !contact) { alert('名前と連絡先を入力してください'); return; }
+  if (!lineId) { alert('電子チケット送付先のLINE IDを入力してください'); return; }
+
+  const t = tickets.find(x => x.id === pendingRequest.ticketId);
+  const game = GAMES_2025.find(g => g.id === t.gameId);
+  const owner = OWNERS[t.owner];
+  const reqDate = new Date().toLocaleDateString('ja-JP');
+
+  // ボタン無効化
+  const btn = document.querySelector('#modalRequest .btn-primary');
+  btn.disabled = true; btn.textContent = '送信中…';
+
+  try {
+    await gasPost('addRequest', {
+      ticketId: t.id,
+      name, contact, lineId, count, message, date: reqDate
+    });
+    // ローカルも更新
+    if (!t.requests) t.requests = [];
+    t.requests.push({ name, contact, lineId, count, message, date: reqDate });
+    t.status = 'requested';
+    myRequests.push({ ticketId: t.id, gameId: t.gameId, count, lineId, date: reqDate });
+
+    closeModal('modalRequest');
+    renderStats(); renderGameList();
+    showToast('リクエストを送信しました！オーナーからの連絡をお待ちください 🐯');
+  } catch (e) {
+    alert('送信に失敗しました。GAS URLを確認してください。\n' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '📨 リクエストを送信';
+  }
+}
+
+// ============================================================
+// 支払いモーダル
+// ============================================================
+function openPaymentModal(ticketId, count) {
+  const t = tickets.find(x => x.id === ticketId);
+  const owner = OWNERS[t.owner];
+  const total = t.price * count;
+  document.getElementById('paymentInfo').textContent = `合計 ¥${total.toLocaleString()}（¥${Number(t.price).toLocaleString()} × ${count}枚）`;
+  let html = '';
+  const pp = t.paypay || owner.paypay;
+  if (pp) html += `
+    <div class="payment-option">
+      <div class="payment-option-title">📱 PayPay</div>
+      <div class="payment-option-detail">PayPay ID：<b>${pp}</b></div>
+      <button class="btn btn-secondary btn-sm" style="margin-top:6px" onclick="copyText('${pp}')">IDをコピー</button>
+    </div>`;
+  const bk = t.bank || owner.bank;
+  if (bk) html += `
+    <div class="payment-option">
+      <div class="payment-option-title">🏦 銀行振込</div>
+      <div class="payment-option-detail">${bk}</div>
+      <button class="btn btn-secondary btn-sm" style="margin-top:6px" onclick="copyText('${bk}')">口座情報をコピー</button>
+    </div>`;
+  if (!html) html = '<div style="color:var(--text-muted);font-size:13px">オーナーに直接お支払い方法を確認してください</div>';
+  html += `
+    <div style="margin-top:14px;background:rgba(255,208,0,0.06);border:1px solid rgba(255,208,0,0.2);border-radius:10px;padding:13px 15px;font-size:12px;color:rgba(255,208,0,0.85);line-height:1.8">
+      <div style="font-weight:700;margin-bottom:6px">📋 お支払いの流れ</div>
+      <div>① 上記のPayPay IDまたは銀行口座へ振込</div>
+      <div>② オーナーへLINEで振込完了の連絡</div>
+      <div>③ オーナーから電子チケットが届きます🎫</div>
+    </div>`;
+  document.getElementById('paymentOptions').innerHTML = html;
+  openModal('modalPayment');
+}
+
+// ============================================================
+// オーナーパネル
+// ============================================================
+function selectOwner(o) {
+  currentOwner = o;
+  document.getElementById('chipWada').classList.toggle('selected', o === 'wada');
+  document.getElementById('chipAruga').classList.toggle('selected', o === 'aruga');
+  document.getElementById('ownerPanelTitle').textContent = `📋 ${OWNERS[o].name} の管理画面`;
+  renderOwnerPanel();
+}
+
+function renderOwnerPanel() {
+  const mine = tickets.filter(t => t.owner === currentOwner);
+  if (!mine.length) {
+    document.getElementById('ownerTicketList').innerHTML = '<div class="empty-state"><div class="empty-icon">🎫</div><p>登録されたチケットはありません<br><small>「チケット登録」ボタンから追加してください</small></p></div>';
+    return;
+  }
+  document.getElementById('ownerTicketList').innerHTML = mine.map(t => {
+    const game = GAMES_2025.find(g => g.id === t.gameId);
+    const sb = t.status === 'confirmed' ? `<span class="ticket-badge badge-confirmed">✅ 確定</span>`
+      : t.status === 'requested' ? `<span class="ticket-badge badge-requested">📬 リクエスト有</span>`
+      : `<span class="ticket-badge badge-available">🎫 出品中</span>`;
+    const reqs = (t.requests || []);
+    const reqHtml = reqs.length ? `
+      <div style="margin-top:10px">
+        <div style="font-size:11px;color:var(--text-muted);font-weight:700;margin-bottom:6px">REQUESTS (${reqs.length}件)</div>
+        ${reqs.map(r => `
+          <div class="request-item">
+            <div class="request-info">
+              <div class="request-name">🙋 ${r.name}　${r.count}枚</div>
+              <div class="request-contact">📞 ${r.contact}　${r.date}</div>
+              ${r.lineId ? `<div class="request-contact" style="margin-top:2px">📲 チケット送付先LINE: <b>${r.lineId}</b></div>` : ''}
+              ${r.message ? `<div class="request-contact" style="margin-top:2px">💬 ${r.message}</div>` : ''}
+            </div>
+            <div class="request-actions">
+              <button class="btn btn-success btn-sm" onclick="confirmTransfer('${t.id}')">確定</button>
+              <button class="btn btn-danger btn-sm" onclick="rejectRequest('${t.id}')">却下</button>
+            </div>
+          </div>`).join('')}
+      </div>` : '';
+    return `
+      <div class="owner-ticket-card">
+        <div class="owner-ticket-top">
+          <div>
+            <div class="owner-ticket-date">${game ? `${game.month}/${game.day}（${game.dow}）${game.time}` : t.gameId}</div>
+            <div class="owner-ticket-game">${game ? game.opponent : ''}｜${t.seat}｜${t.count}枚｜¥${Number(t.price).toLocaleString()}/枚</div>
+            ${game ? `<div style="font-size:11px;color:var(--text-muted);margin-top:2px">📍 ${game.venue}</div>` : ''}
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+            ${sb}
+            <button class="btn btn-danger btn-sm" onclick="deleteTicket('${t.id}')">削除</button>
+          </div>
+        </div>
+        ${reqHtml}
+      </div>`;
+  }).join('');
+}
+
+async function confirmTransfer(ticketId) {
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = '処理中…';
+  try {
+    await gasPost('updateStatus', { ticketId, status: 'confirmed' });
+    tickets.find(x => x.id === ticketId).status = 'confirmed';
+    renderOwnerPanel(); renderStats(); renderGameList();
+    showToast('譲渡確定しました！メンバーへLINEで連絡してください ✅');
+  } catch (e) {
+    alert('更新失敗: ' + e.message);
+    btn.disabled = false; btn.textContent = '確定';
+  }
+}
+
+async function rejectRequest(ticketId) {
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = '処理中…';
+  try {
+    await gasPost('updateStatus', { ticketId, status: 'available', clearRequests: 'true' });
+    const t = tickets.find(x => x.id === ticketId);
+    t.status = 'available'; t.requests = [];
+    renderOwnerPanel(); renderStats(); renderGameList();
+    showToast('リクエストを却下しました');
+  } catch (e) {
+    alert('更新失敗: ' + e.message);
+    btn.disabled = false; btn.textContent = '却下';
+  }
+}
+
+async function deleteTicket(ticketId) {
+  if (!confirm('このチケットを削除しますか？')) return;
+  try {
+    await gasPost('deleteTicket', { ticketId });
+    tickets = tickets.filter(t => t.id !== ticketId);
+    renderOwnerPanel(); renderStats(); renderGameList();
+    showToast('削除しました');
+  } catch (e) {
+    alert('削除失敗: ' + e.message);
+  }
+}
+
+// ============================================================
+// チケット登録
+// ============================================================
+function openRegisterModal() {
+  const o = OWNERS[currentOwner];
+  document.getElementById('registerOwnerName').textContent = `${o.name} のチケットを登録します`;
+  document.getElementById('regSeat').value = o.defaultSeat || '';
+  document.getElementById('regCount').value = o.defaultCount || '2';
+  document.getElementById('regPrice').value = o.defaultPrice || '';
+  document.getElementById('regPaypay').value = o.paypay || '';
+  document.getElementById('regBank').value = o.bank || '';
+  document.getElementById('regNote').value = '';
+  updateVenueFromGame();
+  openModal('modalRegister');
+}
+
+function populateRegisterGameSelect() {
+  document.getElementById('regGame').innerHTML = GAMES_2025.map(g =>
+    `<option value="${g.id}">${g.month}/${g.day}（${g.dow}）${g.opponent} ／ ${g.venue}</option>`
+  ).join('');
+}
+
+function updateVenueFromGame() {
+  const gameId = document.getElementById('regGame').value;
+  const game = GAMES_2025.find(g => g.id === gameId);
+  if (game) document.getElementById('regVenue').value = game.venue;
+}
+
+async function submitRegister() {
+  const gameId = document.getElementById('regGame').value;
+  const seat = document.getElementById('regSeat').value.trim();
+  const count = parseInt(document.getElementById('regCount').value);
+  const price = parseInt(document.getElementById('regPrice').value);
+  const paypay = document.getElementById('regPaypay').value.trim();
+  const bank = document.getElementById('regBank').value.trim();
+  const note = document.getElementById('regNote').value.trim();
+  if (!seat || !price) { alert('席種と価格を入力してください'); return; }
+
+  const btn = document.querySelector('#modalRegister .btn-primary');
+  btn.disabled = true; btn.textContent = '登録中…';
+
+  const newTicket = {
+    id: 't' + Date.now(),
+    gameId, owner: currentOwner, seat, count, price, paypay, bank, note,
+    status: 'available', requests: []
+  };
+
+  try {
+    await gasPost('addTicket', { ...newTicket, requests: '[]' });
+    tickets.push(newTicket);
+    closeModal('modalRegister');
+    renderOwnerPanel(); renderStats(); renderGameList();
+    showToast('チケットを登録しました！🎫');
+  } catch (e) {
+    alert('登録失敗: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '登録する';
+  }
+}
+
+// ============================================================
+// リクエスト履歴
+// ============================================================
+function renderRequestHistory() {
+  if (!myRequests.length) {
+    document.getElementById('requestHistory').innerHTML = '<div class="empty-state"><div class="empty-icon">📬</div><p>まだリクエスト履歴はありません</p></div>';
+    return;
+  }
+  document.getElementById('requestHistory').innerHTML = myRequests.map(r => {
+    const game = GAMES_2025.find(g => g.id === r.gameId);
+    const t = tickets.find(x => x.id === r.ticketId);
+    const status = t ? t.status : 'unknown';
+    const sb = status === 'confirmed' ? `<span class="ticket-badge badge-confirmed">✅ 譲渡確定</span>`
+      : status === 'requested' ? `<span class="ticket-badge badge-requested">📬 回答待ち</span>`
+      : `<span class="ticket-badge badge-none">不明</span>`;
+    const guide = status === 'confirmed'
+      ? `<div style="margin-top:10px;background:rgba(76,175,125,0.08);border:1px solid rgba(76,175,125,0.25);border-radius:9px;padding:10px 13px;font-size:12px;color:var(--success);line-height:1.8">
+          ✅ <b>譲渡が確定しました！</b><br>
+          下のボタンから支払い情報を確認し、振込後にオーナーへLINEで連絡してください。<br>
+          振込確認後、電子チケットが送付されます🎫
+        </div>`
+      : status === 'requested'
+      ? `<div style="margin-top:10px;background:rgba(255,140,0,0.06);border:1px solid rgba(255,140,0,0.2);border-radius:9px;padding:10px 13px;font-size:12px;color:#ff8c00;line-height:1.8">
+          📬 オーナーが確認中です。しばらくお待ちください。<br>
+          確定するとLINEで連絡が届きます。
+        </div>`
+      : '';
+    return `
+      <div class="request-history-card" style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:13px;padding:15px 17px;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div style="font-size:13px;font-weight:700">${game ? `${game.month}/${game.day}（${game.dow}）${game.opponent}` : r.gameId}</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${r.count}枚リクエスト・${r.date}</div>
+          </div>
+          ${sb}
+        </div>
+        ${guide}
+        ${status === 'confirmed' && t ? `<button class="btn btn-primary btn-sm" onclick="openPaymentModal('${t.id}',${r.count})" style="margin-top:8px">💴 支払い情報を確認</button>` : ''}
+      </div>`;
+  }).join('');
+}
+
+// ============================================================
+// UI ヘルパー
+// ============================================================
+function setMode(mode) {
+  if (mode === 'owner' && currentMode !== 'owner') {
+    // オーナーに切り替えるときはパスワード要求
+    document.getElementById('ownerAuthInput').value = '';
+    document.getElementById('ownerAuthError').style.display = 'none';
+    openModal('modalOwnerAuth');
+    return;
+  }
+  currentMode = mode;
+  document.getElementById('btnMember').classList.toggle('active', mode === 'member');
+  document.getElementById('btnOwner').classList.toggle('active', mode === 'owner');
+  const ownerTab = document.getElementById('tab-owner');
+  ownerTab.style.display = mode === 'owner' ? 'block' : 'none';
+  if (mode === 'owner') { renderOwnerPanel(); }
+  if (mode === 'member' && document.getElementById('tab-owner').classList.contains('active')) {
+    setTab('calendar');
+  }
+}
+
+function checkOwnerAuth() {
+  const val = document.getElementById('ownerAuthInput').value.trim();
+  if (val !== OWNER_PASSWORD) {
+    document.getElementById('ownerAuthError').style.display = 'block';
+    document.getElementById('ownerAuthInput').value = '';
+    return;
+  }
+  closeModal('modalOwnerAuth');
+  // 認証成功 → オーナーモードに切替
+  currentMode = 'owner';
+  document.getElementById('btnMember').classList.remove('active');
+  document.getElementById('btnOwner').classList.add('active');
+  document.getElementById('tab-owner').style.display = 'block';
+  renderOwnerPanel();
+  setTab('owner');
+}
+
+function setTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(`tab-${tab}`).classList.add('active');
+  document.getElementById(`section-${tab}`).classList.add('active');
+  if (tab === 'request') renderRequestHistory();
+  if (tab === 'owner') renderOwnerPanel();
+}
+
+function changeMonth(d) {
+  currentMonth = Math.max(3, Math.min(10, currentMonth + d));
+  renderGameList();
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+function copyText(text) { navigator.clipboard.writeText(text).then(() => showToast('コピーしました！📋')); }
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = isError ? 'var(--danger)' : 'var(--success)';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+init();
+</script>
+</body>
+</html>
